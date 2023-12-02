@@ -1,9 +1,8 @@
+use std::ops::Deref;
 use std::str::Chars;
+use std::collections::{HashMap, BTreeMap};
 
-fn main() {
-    println!("{:?}", calculate(
-"
-76xkqjzqtwonfour
+const INPUT:&str = "76xkqjzqtwonfour
 sixthree8sixjxjqsjgjgp
 38bgcczgtninefivefive
 sixthree4eight
@@ -1003,28 +1002,60 @@ jjpngnpzglkbltbrv2tjmqrpb
 onesix8qfvkckg145ndkfdcvznine
 nkthree86b5fgzzfoneqn
 eightgndhmrfouronexldvdvqnzxqjczfk1
-"
-    ));
+";
+
+fn main() {
+    println!("{:?}", calculate(INPUT));
 }
 
 
-pub fn find_number(chars:Chars)-> Option<u64>{
-    let only_numbers = chars.filter(|s| s.is_numeric());
-    let first = only_numbers.clone().next()?;
-    let last = only_numbers.clone().last()?;
-    let mut full = String::new();
-    full.push(first);
-    full.push(last);
-    full.parse::<u64>().ok()
+pub fn convert_to_first_and_last_number(input : &str )->(u64,u64){
+    let string_working_on= String::from(input);
+    let convertion_table:HashMap<&str, u64> = HashMap::from([
+        ("one", 1),
+        ("1", 1),
+        ("two", 2),
+        ("2", 2),
+        ("3", 3),
+        ("three", 3),
+        ("four", 4),
+        ("4", 4),
+        ("five", 5),
+        ("5", 5),
+        ("six", 6),
+        ("6", 6),
+        ("seven", 7),
+        ("7", 7),
+        ("eight", 8),
+        ("8", 8),
+        ("nine", 9),
+        ("9", 9),
+    ]);
+
+    let mut first_occurs:BTreeMap<usize,&str> = BTreeMap::new();
+    for el in convertion_table.keys(){
+        if let Some(finded)= string_working_on.find(el){
+            first_occurs.insert(finded, el);
+        }
+        if let Some(finded)= string_working_on.rfind(el){
+            first_occurs.insert(finded, el);
+        }
+    }
+    (*convertion_table.get(first_occurs.get(first_occurs.keys().next().unwrap()).unwrap()).unwrap(),
+    *convertion_table.get(first_occurs.get(first_occurs.keys().next_back().unwrap()).unwrap()).unwrap(),
+    )
+}
+
+pub fn find_number(t:(u64,u64))-> u64{
+    format!("{}{}",t.0 , t.1).parse::<u64>().unwrap()
 }
 
 pub fn calculate(str_input:&str)-> u64 {
     let lines:Vec<&str> = str_input.split_whitespace().collect();
-    let result:u64 = lines
-    .iter()
-    .map(|s|s.chars())
+    // let line_with_only_number = lines.iter().map(|e| convert_to_number(e.clone()).as_str()).collect();
+    let result:u64 = lines.iter().map(|e| convert_to_first_and_last_number(e))
     .map(find_number)
-    .fold(0,|e,f| e + f.unwrap_or(0));
+    .sum();
     result
 }
 
@@ -1037,10 +1068,30 @@ mod tests {
 pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet";
-    const RES_EXEMPLE:u64 = 142;    
+    const RES_EXEMPLE:u64 = 142;
+
+    const STR_EXEMPLE2:&str = "two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen";
+
+    const RES_EXEMPLE2:u64 = 281;
     #[test]
     fn exploration() {
         let res = calculate(STR_EXEMPLE);
         assert_eq!(res, RES_EXEMPLE);
     }
+
+    #[test]
+    fn exploration2() {
+        let res = calculate(STR_EXEMPLE2);
+        assert_eq!(res, RES_EXEMPLE2);
+        assert_eq!(calculate("sevenine"),79);
+        assert_eq!(calculate("c5"),55);
+        assert_eq!(calculate("9xcn23six9"),99);
+    }
+
 }
